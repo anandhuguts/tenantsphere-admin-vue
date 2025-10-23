@@ -9,7 +9,6 @@ interface User {
   avatar: string;
   tenantId?: number;
   tenantName?: string;
-  businessCategory?: 'Restaurant' | 'Grocery' | 'Salon' | 'Retail';
 }
 
 interface AuthContextType {
