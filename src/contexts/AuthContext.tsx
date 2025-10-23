@@ -5,8 +5,10 @@ interface User {
   id: number;
   name: string;
   email: string;
-  role: string;
+  role: 'superadmin' | 'tenant' | 'staff';
   avatar: string;
+  tenantId?: number;
+  tenantName?: string;
 }
 
 interface AuthContextType {
@@ -40,7 +42,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (response.success) {
       localStorage.setItem('auth_token', response.token);
       localStorage.setItem('user_data', JSON.stringify(response.user));
-      setUser(response.user);
+      setUser(response.user as User);
     }
   };
 

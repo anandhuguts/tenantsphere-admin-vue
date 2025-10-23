@@ -17,13 +17,40 @@ const Login = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  const handleRoleLogin = async (role: 'superadmin' | 'tenant' | 'staff') => {
+    setIsLoading(true);
+
+    try {
+      const demoCredentials = {
+        superadmin: { email: 'admin@tenantsphere.com', password: 'admin123' },
+        tenant: { email: 'tenant@example.com', password: 'tenant123' },
+        staff: { email: 'staff@example.com', password: 'staff123' }
+      };
+      
+      await login(demoCredentials[role].email, demoCredentials[role].password);
+      
+      toast({
+        title: 'Login successful',
+        description: `Welcome as ${role}`,
+      });
+      
+      navigate('/dashboard');
+    } catch (error) {
+      toast({
+        title: 'Login failed',
+        description: error instanceof Error ? error.message : 'Invalid credentials',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
-      // TODO: Replace with actual JWT authentication API call
-      // Example: POST /api/auth/login with email and password
       await login(email, password);
       
       toast({
@@ -93,10 +120,43 @@ const Login = () => {
               Sign In
             </Button>
 
-            <div className="mt-4 p-4 bg-muted rounded-lg">
-              <p className="text-xs text-muted-foreground font-medium mb-2">Demo Credentials:</p>
-              <p className="text-xs text-muted-foreground">Email: admin@tenantsphere.com</p>
-              <p className="text-xs text-muted-foreground">Password: admin123</p>
+            <div className="relative my-4">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t border-border" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-card px-2 text-muted-foreground">Or quick demo as</span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-3 gap-2">
+              <Button 
+                type="button" 
+                variant="outline" 
+                size="sm" 
+                onClick={() => handleRoleLogin('superadmin')}
+                disabled={isLoading}
+              >
+                Admin
+              </Button>
+              <Button 
+                type="button" 
+                variant="outline" 
+                size="sm" 
+                onClick={() => handleRoleLogin('tenant')}
+                disabled={isLoading}
+              >
+                Tenant
+              </Button>
+              <Button 
+                type="button" 
+                variant="outline" 
+                size="sm" 
+                onClick={() => handleRoleLogin('staff')}
+                disabled={isLoading}
+              >
+                Staff
+              </Button>
             </div>
           </form>
         </CardContent>

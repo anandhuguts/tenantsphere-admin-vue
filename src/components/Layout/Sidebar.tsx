@@ -7,12 +7,16 @@ import {
   Users, 
   Settings,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Package,
+  ClipboardList,
+  FileText
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 
-const navigation = [
+const superAdminNavigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Tenants', href: '/tenants', icon: Building2 },
   { name: 'Modules', href: '/modules', icon: Puzzle },
@@ -21,8 +25,31 @@ const navigation = [
   { name: 'Settings', href: '/settings', icon: Settings },
 ];
 
+const tenantNavigation = [
+  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+  { name: 'Orders', href: '/orders', icon: Package },
+  { name: 'Inventory', href: '/inventory', icon: ClipboardList },
+  { name: 'Reports', href: '/reports', icon: BarChart3 },
+  { name: 'Staff', href: '/staff', icon: Users },
+  { name: 'Settings', href: '/settings', icon: Settings },
+];
+
+const staffNavigation = [
+  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+  { name: 'Orders', href: '/orders', icon: Package },
+  { name: 'Tasks', href: '/tasks', icon: ClipboardList },
+  { name: 'Reports', href: '/reports', icon: FileText },
+  { name: 'Settings', href: '/settings', icon: Settings },
+];
+
 export const Sidebar = () => {
   const [collapsed, setCollapsed] = useState(false);
+  const { user } = useAuth();
+
+  const navigation = 
+    user?.role === 'superadmin' ? superAdminNavigation :
+    user?.role === 'tenant' ? tenantNavigation :
+    staffNavigation;
 
   return (
     <aside

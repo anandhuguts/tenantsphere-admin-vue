@@ -36,22 +36,42 @@ export const authAPI = {
   login: async (email: string, password: string) => {
     await delay(800);
     
-    // Simulate login validation
-    if (email === 'admin@tenantsphere.com' && password === 'admin123') {
-      return {
-        success: true,
-        token: 'dummy-jwt-token-' + Date.now(),
-        user: {
-          id: 1,
-          name: 'Super Admin',
-          email: 'admin@tenantsphere.com',
-          role: 'super_admin',
-          avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=admin'
-        }
-      };
+    // Determine role and user info based on email
+    let role: 'superadmin' | 'tenant' | 'staff';
+    let name: string;
+    let tenantId: number | undefined;
+    let tenantName: string | undefined;
+    
+    if (email.includes('admin@')) {
+      role = 'superadmin';
+      name = 'Super Admin';
+    } else if (email.includes('tenant@')) {
+      role = 'tenant';
+      name = 'Maria Bella';
+      tenantId = 1;
+      tenantName = "Bella's Italian Bistro";
+    } else if (email.includes('staff@')) {
+      role = 'staff';
+      name = 'John Staff';
+      tenantId = 1;
+      tenantName = "Bella's Italian Bistro";
+    } else {
+      throw new Error('Invalid credentials');
     }
     
-    throw new Error('Invalid credentials');
+    return {
+      success: true,
+      token: 'dummy-jwt-token-' + Date.now(),
+      user: {
+        id: 1,
+        name,
+        email,
+        role,
+        avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${name}`,
+        tenantId,
+        tenantName
+      }
+    };
   },
 
   /**
