@@ -1,0 +1,39 @@
+{
+  "revenueByMonth": [
+    { "month": "Jan", "revenue": 125000, "tenants": 42 },
+    { "month": "Feb", "revenue": 138000, "tenants": 45 },
+    { "month": "Mar", "revenue": 152000, "tenants": 48 },
+    { "month": "Apr", "revenue": 165000, "tenants": 52 },
+    { "month": "May", "revenue": 178000, "tenants": 56 },
+    { "month": "Jun", "revenue": 195000, "tenants": 60 },
+    { "month": "Jul", "revenue": 212000, "tenants": 63 },
+    { "month": "Aug", "revenue": 228000, "tenants": 67 },
+    { "month": "Sep", "revenue": 245000, "tenants": 72 },
+    { "month": "Oct", "revenue": 268000, "tenants": 78 }
+  ],
+  "tenantGrowth": [
+    { "month": "Jan", "active": 42, "trial": 8, "expired": 3 },
+    { "month": "Feb", "active": 45, "trial": 10, "expired": 2 },
+    { "month": "Mar", "active": 48, "trial": 12, "expired": 4 },
+    { "month": "Apr", "active": 52, "trial": 9, "expired": 3 },
+    { "month": "May", "active": 56, "trial": 11, "expired": 2 },
+    { "month": "Jun", "active": 60, "trial": 13, "expired": 5 },
+    { "month": "Jul", "active": 63, "trial": 15, "expired": 3 },
+    { "month": "Aug", "active": 67, "trial": 14, "expired": 4 },
+    { "month": "Sep", "active": 72, "trial": 16, "expired": 2 },
+    { "month": "Oct", "active": 78, "trial": 18, "expired": 3 }
+  ],
+  "categoryDistribution": [
+    { "name": "Restaurant", "value": 35, "color": "#2563EB" },
+    { "name": "Grocery", "value": 25, "color": "#14B8A6" },
+    { "name": "Salon", "value": 20, "color": "#8B5CF6" },
+    { "name": "Retail", "value": 20, "color": "#F59E0B" }
+  ],
+  "topTenants": [
+    { "name": "FreshMart Groceries", "revenue": 125400, "users": 28 },
+    { "name": "Tech Haven Electronics", "revenue": 89200, "users": 15 },
+    { "name": "Green Valley Organics", "revenue": 76300, "users": 20 },
+    { "name": "Sunset Diner", "revenue": 54200, "users": 10 },
+    { "name": "Bella's Italian Bistro", "revenue": 45600, "users": 12 }
+  ]
+}
