@@ -50,10 +50,27 @@ const Modules = () => {
     if (!selectedTenant) return;
     
     try {
-      // TODO: Replace with actual API calls
-      const available = await moduleAPI.getModulesByCategory(selectedTenant.category);
-      const enabled = await moduleAPI.getTenantModules(selectedTenant.id);
-      
+      // If tenant record already contains a modules column as an object map, use it
+      const tenantModules = selectedTenant.modules;
+      let available: string[] = [];
+      let enabled: string[] = [];
+
+      if (tenantModules && typeof tenantModules === 'object' && !Array.isArray(tenantModules)) {
+        available = Object.keys(tenantModules);
+        enabled = available.filter(k => !!tenantModules[k]);
+      } else {
+        // Fallback to existing API calls
+        const availableFromApi = await moduleAPI.getModulesByCategory(selectedTenant.category) || [];
+        const enabledFromApi = await moduleAPI.getTenantModules(selectedTenant.id) || [];
+
+        available = availableFromApi;
+        if (Array.isArray(enabledFromApi)) {
+          enabled = enabledFromApi;
+        } else if (enabledFromApi && typeof enabledFromApi === 'object') {
+          enabled = Object.keys(enabledFromApi).filter(k => !!enabledFromApi[k]);
+        }
+      }
+
       setAvailableModules(available);
       setEnabledModules(enabled);
       setHasChanges(false);
@@ -64,17 +81,29 @@ const Modules = () => {
 
   const handleModuleToggle = (module: string, checked: boolean) => {
     if (checked) {
-      setEnabledModules([...enabledModules, module]);
+      setEnabledModules(prev => [...prev, module]);
     } else {
-      setEnabledModules(enabledModules.filter(m => m !== module));
+      setEnabledModules(prev => prev.filter(m => m !== module));
     }
     setHasChanges(true);
   };
 
   const handleSaveChanges = async () => {
     try {
-      // TODO: Replace with actual PUT /tenants/:id/modules API call
-      await moduleAPI.updateTenantModules(selectedTenant.id, enabledModules);
+      // Determine payload shape based on tenant.modules shape
+      let payload: any;
+      if (selectedTenant?.modules && typeof selectedTenant.modules === 'object' && !Array.isArray(selectedTenant.modules)) {
+        // convert enabledModules array into object mapping
+        payload = availableModules.reduce((acc: Record<string, boolean>, key) => {
+          acc[key] = enabledModules.includes(key);
+          return acc;
+        }, {});
+      } else {
+        // backend expects an array of enabled module keys
+        payload = enabledModules;
+      }
+
+      await moduleAPI.updateTenantModules(selectedTenant.id, payload);
       
       toast({
         title: 'Modules updated',
@@ -83,11 +112,12 @@ const Modules = () => {
       
       setHasChanges(false);
       
-      // Update tenant in list
+      // Update tenant in list (keep the same modules shape)
       const updatedTenants = tenants.map(t => 
-        t.id === selectedTenant.id ? { ...t, modules: enabledModules } : t
+        t.id === selectedTenant.id ? { ...t, modules: payload } : t
       );
       setTenants(updatedTenants);
+      setSelectedTenant(prev => prev ? { ...prev, modules: payload } : prev);
     } catch (error) {
       toast({
         title: 'Error',
@@ -114,9 +144,15 @@ const Modules = () => {
       'Appointments': 'Schedule and manage appointments',
       'Staff Management': 'Manage staff schedules and permissions',
       'Service Packages': 'Create service bundles and packages',
-      'Warranty Tracking': 'Track product warranties and claims'
+      'Warranty Tracking': 'Track product warranties and claims',
+      // common keys used in your tenant.modules column
+      'users': 'User accounts and access control',
+      'billing': 'Billing and invoicing features',
+      'reports': 'Reporting and analytics tools',
+      'inventory': 'Inventory management and stock tracking',
     };
-    return descriptions[module] || 'Module for enhanced functionality';
+    // Nice fallback: Title-case the key if no description defined
+    return descriptions[module] || module.replace(/(^|\s)\S/g, t => t.toUpperCase()) || 'Module for enhanced functionality';
   };
 
   if (!selectedTenant) {
@@ -157,13 +193,16 @@ const Modules = () => {
         <CardContent>
           <div className="flex items-center gap-4">
             <div className="flex-1">
-              <Select
-                value={selectedTenant?.id.toString()}
-                onValueChange={(value) => {
-                  const tenant = tenants.find(t => t.id === parseInt(value));
-                  setSelectedTenant(tenant);
-                }}
-              >
+           <Select
+  value={selectedTenant?.id?.toString() || ""}
+  onValueChange={(value) => {
+    const tenant = tenants.find(t => t.id.toString() === value);
+    if (tenant) {
+      setSelectedTenant(tenant);
+    }
+  }}
+>
+
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>

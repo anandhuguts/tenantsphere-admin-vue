@@ -28,12 +28,21 @@ const API_BASE_URL = 'https://api.tenantsphere.com';
 const API_BASE = "http://localhost:5000";
 
 export const tenantAPI = {
+  // Get all tenants
   getTenants: async () => {
     const res = await fetch(`${API_BASE}/tenants`);
     if (!res.ok) throw new Error("Failed to fetch tenants");
     return await res.json();
   },
 
+  // Get single tenant by ID
+  getTenant: async (id: number) => {
+    const res = await fetch(`${API_BASE}/tenants/${id}`);
+    if (!res.ok) throw new Error("Failed to fetch tenant");
+    return await res.json();
+  },
+
+  // Create a new tenant
   createTenant: async (tenantData: any) => {
     const res = await fetch(`${API_BASE}/tenants`, {
       method: "POST",
@@ -44,8 +53,29 @@ export const tenantAPI = {
     if (!res.ok) throw new Error(data.error || "Failed to create tenant");
     return data;
   },
-};
 
+  // Update existing tenant
+  updateTenant: async (id: number, tenantData: any) => {
+    const res = await fetch(`${API_BASE}/tenants/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(tenantData),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Failed to update tenant");
+    return data;
+  },
+
+  // Delete tenant by ID
+  deleteTenant: async (id: number) => {
+    const res = await fetch(`${API_BASE}/tenants/${id}`, {
+      method: "DELETE",
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Failed to delete tenant");
+    return data;
+  },
+};
 // ============================================
 // AUTH APIs
 // ============================================
@@ -197,97 +227,212 @@ export const authAPI = {
 
 export const moduleAPI = {
   /**
-   * Get available modules by category
-   * TODO: Replace with actual GET /modules?category=restaurant
+   * Get modules for a tenant
+   * GET /tenants/:id/modules
    */
-  getModulesByCategory: async (category: string) => {
-    await delay(500);
-    
-    const modulesByCategory: Record<string, string[]> = {
-      'Restaurant': ['POS', 'Table Management', 'KOT', 'Kitchen Display', 'Reservations', 'Inventory', 'Reports', 'Multi-branch'],
-      'Grocery': ['POS', 'Barcode Scanning', 'Inventory', 'Batch Tracking', 'Supplier Management', 'Purchase Orders', 'Reports', 'Multi-branch'],
-      'Salon': ['POS', 'Appointments', 'Staff Management', 'Service Packages', 'Inventory', 'Reports', 'Multi-branch'],
-      'Retail': ['POS', 'Inventory', 'Warranty Tracking', 'Barcode Scanning', 'Reports', 'Multi-branch']
-    };
-    
-    return modulesByCategory[category] || [];
+  getTenantModules: async (tenantId: string) => {
+    try {
+      const response = await fetch(`${API_URL}/tenants/${tenantId}/modules`);
+      if (!response.ok) throw new Error('Failed to fetch modules');
+      return await response.json();
+    } catch (error) {
+      console.error('Get modules error:', error);
+      throw error;
+    }
   },
 
   /**
-   * Get tenant's enabled modules
-   * TODO: Replace with actual GET /tenants/:id/modules
+   * Update modules for a tenant
+   * PUT /tenants/:id/modules
    */
-  getTenantModules: async (tenantId: number) => {
-    await delay(400);
-    const tenant = tenantsData.find(t => t.id === tenantId);
-    return tenant?.modules || [];
-  },
+updateTenantModules: async (
+  tenantId: number,
+  modules: Record<string, boolean>
+) => {
+  const res = await fetch(`${API_BASE}/tenants/${tenantId}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ modules }),
+  });
 
-  /**
-   * Update tenant's modules
-   * TODO: Replace with actual PUT /tenants/:id/modules
-   */
-  updateTenantModules: async (tenantId: number, modules: string[]) => {
-    await delay(600);
-    return { success: true, tenantId, modules };
-  }
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Failed to update tenant modules");
+  return data;
+},
 };
-
 // ============================================
 // REPORTS APIs
 // ============================================
 
+const API_URL = 'http://localhost:5000'; // Change to your backend URL
+
 export const reportsAPI = {
   /**
    * Get dashboard statistics
-   * TODO: Replace with actual GET /reports/dashboard
+   * GET /reports/dashboard
    */
   getDashboardStats: async () => {
-    await delay(700);
-    return {
-      totalTenants: 78,
-      activeUsers: 342,
-      totalRevenue: 268000,
-      expiringPlans: 12
-    };
+    try {
+      const response = await fetch(`${API_URL}/reports/dashboard`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch dashboard stats');
+      }
+
+      const data = await response.json();
+      console.log('Dashboard Stats:', data);
+      return data;
+    } catch (error) {
+      console.error('Dashboard stats error:', error);
+      throw error;
+    }
   },
 
   /**
    * Get revenue trends
-   * TODO: Replace with actual GET /reports/revenue
+   * GET /reports/revenue?period=monthly&year=2025
    */
-  getRevenueTrends: async () => {
-    await delay(600);
-    return reportsData.revenueByMonth;
+  getRevenueTrends: async (period: 'daily' | 'monthly' | 'yearly' = 'monthly', year?: number) => {
+    try {
+      const params = new URLSearchParams();
+      if (period) params.append('period', period);
+      if (year) params.append('year', year.toString());
+
+      const response = await fetch(`${API_URL}/reports/revenue?${params.toString()}`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch revenue trends');
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('Revenue trends error:', error);
+      throw error;
+    }
   },
 
   /**
    * Get tenant growth data
-   * TODO: Replace with actual GET /reports/tenant-growth
+   * GET /reports/tenant-growth?period=monthly&limit=12
    */
-  getTenantGrowth: async () => {
-    await delay(600);
-    return reportsData.tenantGrowth;
+  getTenantGrowth: async (period: 'monthly' | 'yearly' = 'monthly', limit: number = 12) => {
+    try {
+      const params = new URLSearchParams();
+      params.append('period', period);
+      params.append('limit', limit.toString());
+
+      const response = await fetch(`${API_URL}/reports/tenant-growth?${params.toString()}`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch tenant growth');
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('Tenant growth error:', error);
+      throw error;
+    }
   },
 
   /**
    * Get category distribution
-   * TODO: Replace with actual GET /reports/categories
+   * GET /reports/categories
    */
   getCategoryDistribution: async () => {
-    await delay(500);
-    return reportsData.categoryDistribution;
+    try {
+      const response = await fetch(`${API_URL}/reports/categories`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch category distribution');
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('Category distribution error:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Get plan distribution
+   * GET /reports/plans
+   */
+  getPlanDistribution: async () => {
+    try {
+      const response = await fetch(`${API_URL}/reports/plans`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch plan distribution');
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('Plan distribution error:', error);
+      throw error;
+    }
   },
 
   /**
    * Export report data
-   * TODO: Replace with actual GET /reports/export?type=csv&report=revenue
+   * GET /reports/export?type=csv&report=revenue&from=2025-01-01&to=2025-12-31
    */
-  exportReport: async (reportType: string, format: 'csv' | 'pdf' | 'excel') => {
-    await delay(1000);
-    // Simulate file download
-    console.log(`Exporting ${reportType} as ${format}`);
-    return { success: true, message: `Report exported as ${format}` };
+  exportReport: async (
+    reportType: string, 
+    format: 'csv' | 'pdf' | 'excel',
+    filters?: { from?: string; to?: string; category?: string }
+  ) => {
+    try {
+      const params = new URLSearchParams();
+      params.append('type', format);
+      params.append('report', reportType);
+      
+      if (filters?.from) params.append('from', filters.from);
+      if (filters?.to) params.append('to', filters.to);
+      if (filters?.category) params.append('category', filters.category);
+
+      const response = await fetch(`${API_URL}/reports/export?${params.toString()}`, {
+        method: 'GET',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to export report');
+      }
+
+      // Handle file download
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${reportType}_${new Date().toISOString().split('T')[0]}.${format}`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      return { success: true, message: `Report exported as ${format}` };
+    } catch (error) {
+      console.error('Export report error:', error);
+      throw error;
+    }
   }
 };
 

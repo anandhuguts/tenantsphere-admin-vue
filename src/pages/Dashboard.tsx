@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { reportsAPI, tenantAPI, activityAPI } from '@/services/api';
+import { reportsAPI, activityAPI } from '@/services/api';
 import { 
   Building2, 
   Users, 
@@ -29,39 +29,55 @@ import { useNavigate } from 'react-router-dom';
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const [stats, setStats] = useState({ totalTenants: 0, activeUsers: 0, totalRevenue: 0, expiringPlans: 0 });
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState({ totalTenants: 0, activeTenants: 0, activeUsers: 0, totalRevenue: 0, expiringPlans: 0 });
   const [revenueData, setRevenueData] = useState<any[]>([]);
   const [tenantGrowth, setTenantGrowth] = useState<any[]>([]);
+  const [categoryDistribution, setCategoryDistribution] = useState<any[]>([]);
+  const [planDistribution, setPlanDistribution] = useState<any[]>([]);
   const [recentActivity, setRecentActivity] = useState<any[]>([]);
-  const [tenants, setTenants] = useState<any[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
 
   useEffect(() => {
-    const loadData = async () => {
-      const [statsData, revenue, growth, activity, allTenants] = await Promise.all([
-        reportsAPI.getDashboardStats(),
-        reportsAPI.getRevenueTrends(),
-        reportsAPI.getTenantGrowth(),
-        activityAPI.getRecentActivity(8),
-        tenantAPI.getTenants()
-      ]);
-
-      setStats(statsData);
-      setRevenueData(revenue);
-      setTenantGrowth(growth);
-      setRecentActivity(activity);
-      setTenants(allTenants);
-    };
-
-    loadData();
+    loadDashboard();
   }, []);
 
-  // Pagination
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentTenants = tenants.slice(indexOfFirstItem, indexOfLastItem);
-  const totalPages = Math.ceil(tenants.length / itemsPerPage);
+  const loadDashboard = async () => {
+    try {
+      setLoading(true);
+      
+      // ONE API CALL instead of 5+
+      const dashboardData = await reportsAPI.getDashboardStats();
+      
+      console.log('Dashboard data:', dashboardData);
+
+      // Set all state from single response
+      setStats(dashboardData.stats);
+      setRevenueData(dashboardData.revenueData || []);
+      setTenantGrowth(dashboardData.tenantGrowth || []);
+      setCategoryDistribution(dashboardData.categoryDistribution || []);
+      setPlanDistribution(dashboardData.planDistribution || []);
+
+      // Activity is separate (optional)
+      try {
+        const activity = await activityAPI.getRecentActivity(8);
+        setRecentActivity(activity);
+      } catch (error) {
+        console.log('Activity data not available');
+        setRecentActivity([]);
+      }
+
+    } catch (error) {
+      console.error('Dashboard load error:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // For tenant table, we'll show growth data instead of full tenant list
+  // Or you can add a separate /tenants endpoint call if needed
+  const displayTenants = tenantGrowth.slice(-itemsPerPage);
 
   const statCards = [
     {
@@ -73,20 +89,20 @@ const Dashboard = () => {
       color: 'text-primary'
     },
     {
+      title: 'Active Tenants',
+      value: stats.activeTenants,
+      icon: Building2,
+      trend: '+8%',
+      trendUp: true,
+      color: 'text-success'
+    },
+    {
       title: 'Active Users',
       value: stats.activeUsers,
       icon: Users,
       trend: '+8%',
       trendUp: true,
       color: 'text-secondary'
-    },
-    {
-      title: 'Total Revenue',
-      value: `$${(stats.totalRevenue / 1000).toFixed(0)}K`,
-      icon: DollarSign,
-      trend: '+23%',
-      trendUp: true,
-      color: 'text-success'
     },
     {
       title: 'Expiring Plans',
@@ -108,14 +124,16 @@ const Dashboard = () => {
     }
   };
 
-  const getStatusColor = (status: string) => {
-    switch(status) {
-      case 'Active': return 'bg-success/10 text-success hover:bg-success/20';
-      case 'Expiring Soon': return 'bg-warning/10 text-warning hover:bg-warning/20';
-      case 'Inactive': return 'bg-muted text-muted-foreground';
-      default: return 'bg-muted text-muted-foreground';
-    }
-  };
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-muted-foreground">Loading dashboard...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -159,7 +177,7 @@ const Dashboard = () => {
         <Card className="col-span-1">
           <CardHeader>
             <CardTitle>Revenue Trend</CardTitle>
-            <p className="text-sm text-muted-foreground">Monthly revenue over the last 10 months</p>
+            <p className="text-sm text-muted-foreground">Monthly revenue over the last 6 months</p>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
@@ -197,7 +215,7 @@ const Dashboard = () => {
         <Card className="col-span-1">
           <CardHeader>
             <CardTitle>Tenant Growth</CardTitle>
-            <p className="text-sm text-muted-foreground">Active vs trial tenants over time</p>
+            <p className="text-sm text-muted-foreground">New tenants per month</p>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
@@ -213,15 +231,20 @@ const Dashboard = () => {
                   }}
                 />
                 <Legend />
-                <Line type="monotone" dataKey="active" stroke="hsl(var(--primary))" strokeWidth={2} name="Active" />
-                <Line type="monotone" dataKey="trial" stroke="hsl(var(--secondary))" strokeWidth={2} name="Trial" />
+                <Line 
+                  type="monotone" 
+                  dataKey="tenants" 
+                  stroke="hsl(var(--primary))" 
+                  strokeWidth={2} 
+                  name="New Tenants" 
+                />
               </LineChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
       </div>
 
-      {/* Recent Activity and Tenant Table */}
+      {/* Recent Activity and Distribution Charts */}
       <div className="grid gap-4 lg:grid-cols-3">
         {/* Recent Activity */}
         <Card className="lg:col-span-1">
@@ -230,91 +253,126 @@ const Dashboard = () => {
             <p className="text-sm text-muted-foreground">Latest tenant actions</p>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
-              {recentActivity.map((activity) => (
-                <div key={activity.id} className="flex items-start gap-3 pb-3 border-b border-border last:border-0 last:pb-0">
-                  <div className="mt-1 p-2 rounded-lg bg-muted">
-                    {getActivityIcon(activity.type)}
+            {recentActivity.length > 0 ? (
+              <div className="space-y-3">
+                {recentActivity.map((activity) => (
+                  <div key={activity.id} className="flex items-start gap-3 pb-3 border-b border-border last:border-0 last:pb-0">
+                    <div className="mt-1 p-2 rounded-lg bg-muted">
+                      {getActivityIcon(activity.type)}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">{activity.user}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {activity.action} <span className="font-medium">{activity.target}</span>
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">{activity.time}</p>
+                    </div>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{activity.user}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {activity.action} <span className="font-medium">{activity.target}</span>
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-1">{activity.time}</p>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                <Clock className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                <p className="text-sm">No recent activity</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Category Distribution */}
+        <Card className="lg:col-span-1">
+          <CardHeader>
+            <CardTitle>Categories</CardTitle>
+            <p className="text-sm text-muted-foreground">Tenant distribution by type</p>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {categoryDistribution.map((cat, index) => (
+                <div key={index} className="space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="font-medium">{cat.name}</span>
+                    <span className="text-muted-foreground">{cat.value}</span>
+                  </div>
+                  <div className="w-full bg-muted rounded-full h-2">
+                    <div 
+                      className="bg-primary h-2 rounded-full transition-all"
+                      style={{ 
+                        width: `${(cat.value / stats.totalTenants * 100).toFixed(0)}%` 
+                      }}
+                    />
                   </div>
                 </div>
               ))}
+              {categoryDistribution.length === 0 && (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Building2 className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                  <p className="text-sm">No categories yet</p>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
 
-        {/* Tenant Table */}
-        <Card className="lg:col-span-2">
+        {/* Plan Distribution */}
+        <Card className="lg:col-span-1">
           <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle>Recent Tenants</CardTitle>
-                <p className="text-sm text-muted-foreground">Overview of your tenant base</p>
-              </div>
-              <Button onClick={() => navigate('/tenants')} variant="outline" size="sm">
-                View All
-              </Button>
-            </div>
+            <CardTitle>Plans</CardTitle>
+            <p className="text-sm text-muted-foreground">Subscription breakdown</p>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {currentTenants.map((tenant) => (
-                <div key={tenant.id} className="flex items-center justify-between p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors">
-                  <div className="flex items-center gap-3 flex-1">
-                    <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
-                      <span className="text-white font-semibold text-sm">{tenant.name.charAt(0)}</span>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium truncate">{tenant.name}</p>
-                      <p className="text-sm text-muted-foreground">{tenant.category}</p>
-                    </div>
+              {planDistribution.map((plan, index) => (
+                <div key={index} className="space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="font-medium capitalize">{plan.name}</span>
+                    <span className="text-muted-foreground">{plan.value}</span>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <div className="text-right hidden md:block">
-                      <p className="text-sm font-medium">${tenant.revenue.toLocaleString()}</p>
-                      <p className="text-xs text-muted-foreground">{tenant.users} users</p>
-                    </div>
-                    <Badge className={getStatusColor(tenant.status)}>
-                      {tenant.status}
-                    </Badge>
+                  <div className="w-full bg-muted rounded-full h-2">
+                    <div 
+                      className="bg-secondary h-2 rounded-full transition-all"
+                      style={{ 
+                        width: `${(plan.value / stats.totalTenants * 100).toFixed(0)}%` 
+                      }}
+                    />
                   </div>
                 </div>
               ))}
-            </div>
-
-            {/* Pagination */}
-            <div className="flex items-center justify-between mt-4">
-              <p className="text-sm text-muted-foreground">
-                Showing {indexOfFirstItem + 1}-{Math.min(indexOfLastItem, tenants.length)} of {tenants.length}
-              </p>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                  disabled={currentPage === 1}
-                >
-                  Previous
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                  disabled={currentPage === totalPages}
-                >
-                  Next
-                </Button>
-              </div>
+              {planDistribution.length === 0 && (
+                <div className="text-center py-8 text-muted-foreground">
+                  <DollarSign className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                  <p className="text-sm">No plans yet</p>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
       </div>
+
+      {/* Quick Actions */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Quick Actions</CardTitle>
+              <p className="text-sm text-muted-foreground">Manage your platform</p>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-wrap gap-3">
+            <Button onClick={() => navigate('/tenants')}>
+              <Building2 className="mr-2 h-4 w-4" />
+              View All Tenants
+            </Button>
+            <Button variant="outline" onClick={() => navigate('/reports')}>
+              View Reports
+            </Button>
+            <Button variant="outline" onClick={() => navigate('/settings')}>
+              Platform Settings
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };
