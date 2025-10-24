@@ -24,6 +24,28 @@ const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 // API Base URL - replace with your actual backend URL
 const API_BASE_URL = 'https://api.tenantsphere.com';
 
+// src/services/api.ts
+const API_BASE = "http://localhost:5000";
+
+export const tenantAPI = {
+  getTenants: async () => {
+    const res = await fetch(`${API_BASE}/tenants`);
+    if (!res.ok) throw new Error("Failed to fetch tenants");
+    return await res.json();
+  },
+
+  createTenant: async (tenantData: any) => {
+    const res = await fetch(`${API_BASE}/tenants`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(tenantData),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Failed to create tenant");
+    return data;
+  },
+};
+
 // ============================================
 // AUTH APIs
 // ============================================
@@ -103,71 +125,71 @@ export const authAPI = {
 // TENANT APIs
 // ============================================
 
-export const tenantAPI = {
-  /**
-   * Get all tenants with optional filters
-   * TODO: Replace with actual GET /tenants?status=active&category=restaurant
-   */
-  getTenants: async (filters?: { status?: string; category?: string }) => {
-    await delay(600);
-    let tenants = [...tenantsData];
+// export const tenantAPI = {
+//   /**
+//    * Get all tenants with optional filters
+//    * TODO: Replace with actual GET /tenants?status=active&category=restaurant
+//    */
+//   getTenants: async (filters?: { status?: string; category?: string }) => {
+//     await delay(600);
+//     let tenants = [...tenantsData];
     
-    if (filters?.status) {
-      tenants = tenants.filter(t => t.status === filters.status);
-    }
-    if (filters?.category) {
-      tenants = tenants.filter(t => t.category === filters.category);
-    }
+//     if (filters?.status) {
+//       tenants = tenants.filter(t => t.status === filters.status);
+//     }
+//     if (filters?.category) {
+//       tenants = tenants.filter(t => t.category === filters.category);
+//     }
     
-    return tenants;
-  },
+//     return tenants;
+//   },
 
-  /**
-   * Get single tenant by ID
-   * TODO: Replace with actual GET /tenants/:id
-   */
-  getTenant: async (id: number) => {
-    await delay(400);
-    const tenant = tenantsData.find(t => t.id === id);
-    if (!tenant) throw new Error('Tenant not found');
-    return tenant;
-  },
+//   /**
+//    * Get single tenant by ID
+//    * TODO: Replace with actual GET /tenants/:id
+//    */
+//   getTenant: async (id: number) => {
+//     await delay(400);
+//     const tenant = tenantsData.find(t => t.id === id);
+//     if (!tenant) throw new Error('Tenant not found');
+//     return tenant;
+//   },
 
-  /**
-   * Create new tenant
-   * TODO: Replace with actual POST /tenants
-   */
-  createTenant: async (data: any) => {
-    await delay(800);
-    const newTenant = {
-      id: Math.max(...tenantsData.map(t => t.id)) + 1,
-      ...data,
-      joinDate: new Date().toISOString().split('T')[0],
-      status: 'Active'
-    };
-    return newTenant;
-  },
+//   /**
+//    * Create new tenant
+//    * TODO: Replace with actual POST /tenants
+//    */
+//   createTenant: async (data: any) => {
+//     await delay(800);
+//     const newTenant = {
+//       id: Math.max(...tenantsData.map(t => t.id)) + 1,
+//       ...data,
+//       joinDate: new Date().toISOString().split('T')[0],
+//       status: 'Active'
+//     };
+//     return newTenant;
+//   },
 
-  /**
-   * Update existing tenant
-   * TODO: Replace with actual PUT /tenants/:id
-   */
-  updateTenant: async (id: number, data: any) => {
-    await delay(700);
-    const tenant = tenantsData.find(t => t.id === id);
-    if (!tenant) throw new Error('Tenant not found');
-    return { ...tenant, ...data };
-  },
+//   /**
+//    * Update existing tenant
+//    * TODO: Replace with actual PUT /tenants/:id
+//    */
+//   updateTenant: async (id: number, data: any) => {
+//     await delay(700);
+//     const tenant = tenantsData.find(t => t.id === id);
+//     if (!tenant) throw new Error('Tenant not found');
+//     return { ...tenant, ...data };
+//   },
 
-  /**
-   * Delete tenant
-   * TODO: Replace with actual DELETE /tenants/:id
-   */
-  deleteTenant: async (id: number) => {
-    await delay(500);
-    return { success: true, id };
-  }
-};
+//   /**
+//    * Delete tenant
+//    * TODO: Replace with actual DELETE /tenants/:id
+//    */
+//   deleteTenant: async (id: number) => {
+//     await delay(500);
+//     return { success: true, id };
+//   }
+// };
 
 // ============================================
 // MODULE APIs

@@ -78,6 +78,7 @@ const Tenants = () => {
     const data = await tenantAPI.getTenants();
     setTenants(data);
     setFilteredTenants(data);
+  
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
