@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { reportsAPI } from '@/services/api';
-import { Download, FileText, TrendingUp } from 'lucide-react';
+import { Download, FileText, TrendingUp, Loader2 } from 'lucide-react';
 import {
   LineChart,
   Line,
@@ -28,11 +28,20 @@ import {
 } from '@/components/ui/select';
 
 const Reports = () => {
-  const [revenueData, setRevenueData] = useState<any[]>([]);
-  const [tenantGrowth, setTenantGrowth] = useState<any[]>([]);
-  const [categoryData, setCategoryData] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [exporting, setExporting] = useState(false);
+  const [dashboardData, setDashboardData] = useState<any>(null);
   const [exportFormat, setExportFormat] = useState<'csv' | 'pdf' | 'excel'>('csv');
   const { toast } = useToast();
+
+  // Category colors for pie chart
+  const CATEGORY_COLORS = {
+    Restaurant: '#3b82f6',
+    Grocery: '#10b981',
+    Salon: '#8b5cf6',
+    Retail: '#f59e0b',
+    Other: '#6b7280'
+  };
 
   useEffect(() => {
     loadReportData();
@@ -40,38 +49,79 @@ const Reports = () => {
 
   const loadReportData = async () => {
     try {
-      // TODO: Replace with actual API calls
-      const [revenue, growth, categories] = await Promise.all([
-        reportsAPI.getRevenueTrends(),
-        reportsAPI.getTenantGrowth(),
-        reportsAPI.getCategoryDistribution()
-      ]);
-
-      setRevenueData(revenue);
-      setTenantGrowth(growth);
-      setCategoryData(categories);
+      setLoading(true);
+      const data = await reportsAPI.getDashboardStats();
+      
+      console.log('Reports data loaded:', data);
+      setDashboardData(data);
     } catch (error) {
       console.error('Failed to load report data:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to load report data',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleExport = async (reportType: string) => {
     try {
-      // TODO: Replace with actual export API call
+      setExporting(true);
       await reportsAPI.exportReport(reportType, exportFormat);
       
       toast({
-        title: 'Export started',
-        description: `Exporting ${reportType} report as ${exportFormat.toUpperCase()}...`,
+        title: 'Export successful',
+        description: `${reportType} report exported as ${exportFormat.toUpperCase()}`,
       });
     } catch (error) {
+      console.error('Export failed:', error);
       toast({
         title: 'Export failed',
         description: 'Failed to export report. Please try again.',
         variant: 'destructive',
       });
+    } finally {
+      setExporting(false);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-[60vh]">
+        <div className="text-center">
+          <Loader2 className="h-12 w-12 mx-auto text-primary animate-spin mb-4" />
+          <p className="text-muted-foreground">Loading reports...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!dashboardData) {
+    return (
+      <div className="flex items-center justify-center h-[60vh]">
+        <div className="text-center">
+          <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+          <h3 className="text-lg font-semibold mb-2">No data available</h3>
+          <p className="text-muted-foreground">Unable to load report data</p>
+        </div>
+      </div>
+    );
+  }
+
+  const revenueData = dashboardData.revenueData || [];
+  const tenantGrowth = dashboardData.tenantGrowth || [];
+  const categoryData = (dashboardData.categoryDistribution || []).map((cat: any) => ({
+    ...cat,
+    color: CATEGORY_COLORS[cat.name as keyof typeof CATEGORY_COLORS] || CATEGORY_COLORS.Other
+  }));
+
+  // Calculate stats from real data
+  const totalRevenue = revenueData.reduce((sum: number, item: any) => sum + item.revenue, 0);
+  const avgRevenuePerTenant = dashboardData.stats?.totalTenants > 0 
+    ? Math.round(totalRevenue / dashboardData.stats.totalTenants) 
+    : 0;
 
   return (
     <div className="space-y-6">
@@ -102,67 +152,32 @@ const Reports = () => {
           <div className="flex items-center justify-between">
             <div>
               <CardTitle>Revenue Analysis</CardTitle>
-              <CardDescription>Monthly revenue trends over the past 10 months</CardDescription>
+              <CardDescription>Monthly revenue trends</CardDescription>
             </div>
-            <Button variant="outline" onClick={() => handleExport('revenue')}>
-              <Download className="mr-2 h-4 w-4" />
+            <Button 
+              variant="outline" 
+              onClick={() => handleExport('revenue')}
+              disabled={exporting}
+            >
+              {exporting ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Download className="mr-2 h-4 w-4" />
+              )}
               Export
             </Button>
           </div>
         </CardHeader>
         <CardContent>
-          <ResponsiveContainer width="100%" height={350}>
-            <LineChart data={revenueData}>
-              <defs>
-                <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.8}/>
-                  <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-              <XAxis dataKey="month" className="text-xs" />
-              <YAxis className="text-xs" />
-              <Tooltip 
-                contentStyle={{ 
-                  backgroundColor: 'hsl(var(--card))',
-                  border: '1px solid hsl(var(--border))',
-                  borderRadius: '8px'
-                }}
-                formatter={(value: any) => `$${value.toLocaleString()}`}
-              />
-              <Line 
-                type="monotone" 
-                dataKey="revenue" 
-                stroke="hsl(var(--primary))" 
-                strokeWidth={3}
-                fill="url(#colorRevenue)"
-                dot={{ fill: 'hsl(var(--primary))', r: 4 }}
-                activeDot={{ r: 6 }}
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </CardContent>
-      </Card>
-
-      {/* Growth Metrics */}
-      <div className="grid gap-4 lg:grid-cols-2">
-        {/* Tenant Growth */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle>Tenant Growth</CardTitle>
-                <CardDescription>Active vs trial tenants comparison</CardDescription>
-              </div>
-              <Button variant="outline" size="sm" onClick={() => handleExport('tenant-growth')}>
-                <Download className="mr-2 h-4 w-4" />
-                Export
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={tenantGrowth}>
+          {revenueData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={350}>
+              <LineChart data={revenueData}>
+                <defs>
+                  <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.8}/>
+                    <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
                 <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                 <XAxis dataKey="month" className="text-xs" />
                 <YAxis className="text-xs" />
@@ -172,14 +187,88 @@ const Reports = () => {
                     border: '1px solid hsl(var(--border))',
                     borderRadius: '8px'
                   }}
+                  formatter={(value: any) => `$${value.toLocaleString()}`}
                 />
-                <Legend />
-                <Bar dataKey="active" fill="hsl(var(--primary))" name="Active" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="trial" fill="hsl(var(--secondary))" name="Trial" radius={[4, 4, 0, 0]} />
-              </BarChart>
+                <Line 
+                  type="monotone" 
+                  dataKey="revenue" 
+                  stroke="hsl(var(--primary))" 
+                  strokeWidth={3}
+                  fill="url(#colorRevenue)"
+                  dot={{ fill: 'hsl(var(--primary))', r: 4 }}
+                  activeDot={{ r: 6 }}
+                />
+              </LineChart>
             </ResponsiveContainer>
-          </CardContent>
-        </Card>
+          ) : (
+            <div className="flex items-center justify-center h-[350px] text-muted-foreground">
+              No revenue data available
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Growth Metrics */}
+      <div className="grid gap-4 lg:grid-cols-2">
+        {/* Tenant Growth */}
+       {/* Tenant Growth */}
+<Card>
+  <CardHeader>
+    <div className="flex items-center justify-between">
+      <div>
+        <CardTitle>Tenant Growth</CardTitle>
+        <CardDescription>New tenants per month</CardDescription>
+      </div>
+      <Button 
+        variant="outline" 
+        size="sm" 
+        onClick={() => handleExport('tenant-growth')}
+        disabled={exporting}
+      >
+        {exporting ? (
+          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+        ) : (
+          <Download className="mr-2 h-4 w-4" />
+        )}
+        Export
+      </Button>
+    </div>
+  </CardHeader>
+  <CardContent>
+    {tenantGrowth.length > 0 ? (
+      <ResponsiveContainer width="100%" height={300}>
+        <BarChart 
+          data={tenantGrowth}
+          barCategoryGap="20%"
+          barSize={tenantGrowth.length === 1 ? 60 : undefined}
+        >
+          <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+          <XAxis dataKey="month" className="text-xs" />
+          <YAxis className="text-xs" allowDecimals={false} />
+          <Tooltip 
+            contentStyle={{ 
+              backgroundColor: 'hsl(var(--card))',
+              border: '1px solid hsl(var(--border))',
+              borderRadius: '8px'
+            }}
+          />
+          <Legend />
+          <Bar 
+            dataKey="tenants" 
+            fill="hsl(var(--primary))" 
+            name="New Tenants" 
+            radius={[4, 4, 0, 0]}
+            maxBarSize={80}
+          />
+        </BarChart>
+      </ResponsiveContainer>
+    ) : (
+      <div className="flex items-center justify-center h-[300px] text-muted-foreground">
+        No growth data available
+      </div>
+    )}
+  </CardContent>
+</Card>
 
         {/* Category Distribution */}
         <Card>
@@ -189,32 +278,47 @@ const Reports = () => {
                 <CardTitle>Category Distribution</CardTitle>
                 <CardDescription>Tenants by business category</CardDescription>
               </div>
-              <Button variant="outline" size="sm" onClick={() => handleExport('categories')}>
-                <Download className="mr-2 h-4 w-4" />
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => handleExport('categories')}
+                disabled={exporting}
+              >
+                {exporting ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Download className="mr-2 h-4 w-4" />
+                )}
                 Export
               </Button>
             </div>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={categoryData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                  outerRadius={100}
-                  fill="#8884d8"
-                  dataKey="value"
-                >
-                  {categoryData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
+            {categoryData.length > 0 ? (
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie
+                    data={categoryData}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                    outerRadius={100}
+                    fill="#8884d8"
+                    dataKey="value"
+                  >
+                    {categoryData.map((entry: any, index: number) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center h-[300px] text-muted-foreground">
+                No category data available
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -224,14 +328,14 @@ const Reports = () => {
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Total Revenue (YTD)
+              Total Revenue (Mock)
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">$1,824,000</div>
-            <div className="flex items-center gap-1 text-sm text-success mt-2">
+            <div className="text-3xl font-bold">${totalRevenue.toLocaleString()}</div>
+            <div className="flex items-center gap-1 text-sm text-muted-foreground mt-2">
               <TrendingUp className="h-4 w-4" />
-              <span>+18.2% from last year</span>
+              <span>Based on available data</span>
             </div>
           </CardContent>
         </Card>
@@ -239,14 +343,14 @@ const Reports = () => {
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Average Revenue per Tenant
+              Avg Revenue per Tenant
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">$23,385</div>
-            <div className="flex items-center gap-1 text-sm text-success mt-2">
+            <div className="text-3xl font-bold">${avgRevenuePerTenant.toLocaleString()}</div>
+            <div className="flex items-center gap-1 text-sm text-muted-foreground mt-2">
               <TrendingUp className="h-4 w-4" />
-              <span>+12.4% from last month</span>
+              <span>Total tenants: {dashboardData.stats?.totalTenants || 0}</span>
             </div>
           </CardContent>
         </Card>
@@ -254,14 +358,18 @@ const Reports = () => {
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Retention Rate
+              Active Tenants
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">94.2%</div>
+            <div className="text-3xl font-bold">{dashboardData.stats?.activeTenants || 0}</div>
             <div className="flex items-center gap-1 text-sm text-success mt-2">
               <TrendingUp className="h-4 w-4" />
-              <span>+2.1% from last quarter</span>
+              <span>
+                {dashboardData.stats?.totalTenants > 0 
+                  ? `${((dashboardData.stats.activeTenants / dashboardData.stats.totalTenants) * 100).toFixed(1)}% of total`
+                  : 'No data'}
+              </span>
             </div>
           </CardContent>
         </Card>
@@ -275,19 +383,39 @@ const Reports = () => {
         </CardHeader>
         <CardContent>
           <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
-            <Button variant="outline" className="justify-start" onClick={() => handleExport('revenue')}>
+            <Button 
+              variant="outline" 
+              className="justify-start" 
+              onClick={() => handleExport('revenue')}
+              disabled={exporting}
+            >
               <FileText className="mr-2 h-4 w-4" />
               Revenue Report
             </Button>
-            <Button variant="outline" className="justify-start" onClick={() => handleExport('tenants')}>
+            <Button 
+              variant="outline" 
+              className="justify-start" 
+              onClick={() => handleExport('tenants')}
+              disabled={exporting}
+            >
               <FileText className="mr-2 h-4 w-4" />
               Tenant Report
             </Button>
-            <Button variant="outline" className="justify-start" onClick={() => handleExport('users')}>
+            <Button 
+              variant="outline" 
+              className="justify-start" 
+              onClick={() => handleExport('users')}
+              disabled={exporting}
+            >
               <FileText className="mr-2 h-4 w-4" />
               User Report
             </Button>
-            <Button variant="outline" className="justify-start" onClick={() => handleExport('comprehensive')}>
+            <Button 
+              variant="outline" 
+              className="justify-start" 
+              onClick={() => handleExport('comprehensive')}
+              disabled={exporting}
+            >
               <FileText className="mr-2 h-4 w-4" />
               Full Report
             </Button>

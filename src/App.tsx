@@ -50,7 +50,7 @@ const App = () => (
                 <Route path="dashboard" element={<DashboardRouter />} />
                 <Route path="tenants" element={<RoleBasedRoute allowedRoles={['superadmin']}><Tenants /></RoleBasedRoute>} />
                 <Route path="modules" element={<RoleBasedRoute allowedRoles={['superadmin']}><Modules /></RoleBasedRoute>} />
-                <Route path="reports" element={<Reports />} />
+                <Route path="reports" element={<RoleBasedRoute allowedRoles={['superadmin']}><Reports /></RoleBasedRoute>} />
                 <Route path="users" element={<RoleBasedRoute allowedRoles={['superadmin']}><Users /></RoleBasedRoute>} />
                 <Route path="settings" element={<Settings />} />
                 <Route path="orders" element={<RoleBasedRoute allowedRoles={['tenant', 'staff']}><Orders /></RoleBasedRoute>} />

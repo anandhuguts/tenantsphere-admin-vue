@@ -18,14 +18,11 @@
 import tenantsData from '@/data/tenants.json';
 import reportsData from '@/data/reports.json';
 
-// Simulated delay to mimic network request
-const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-
 // API Base URL - replace with your actual backend URL
 const API_BASE_URL = 'https://api.tenantsphere.com';
 
 // src/services/api.ts
-const API_BASE = "http://localhost:5000";
+const API_BASE = "https://billingbackend-1vei.onrender.com";
 
 export const tenantAPI = {
   // Get all tenants
@@ -86,8 +83,6 @@ export const authAPI = {
    * TODO: Replace with actual POST /auth/login
    */
   login: async (email: string, password: string) => {
-    await delay(800);
-    
     // Determine role and user info based on email
     let role: 'superadmin' | 'tenant' | 'staff';
     let name: string;
@@ -131,7 +126,6 @@ export const authAPI = {
    * TODO: Replace with actual POST /auth/logout
    */
   logout: async () => {
-    await delay(300);
     localStorage.removeItem('auth_token');
     localStorage.removeItem('user_data');
     return { success: true };
@@ -142,7 +136,6 @@ export const authAPI = {
    * TODO: Replace with actual GET /auth/me
    */
   getCurrentUser: async () => {
-    await delay(400);
     const userData = localStorage.getItem('user_data');
     if (userData) {
       return JSON.parse(userData);
@@ -150,76 +143,6 @@ export const authAPI = {
     return null;
   }
 };
-
-// ============================================
-// TENANT APIs
-// ============================================
-
-// export const tenantAPI = {
-//   /**
-//    * Get all tenants with optional filters
-//    * TODO: Replace with actual GET /tenants?status=active&category=restaurant
-//    */
-//   getTenants: async (filters?: { status?: string; category?: string }) => {
-//     await delay(600);
-//     let tenants = [...tenantsData];
-    
-//     if (filters?.status) {
-//       tenants = tenants.filter(t => t.status === filters.status);
-//     }
-//     if (filters?.category) {
-//       tenants = tenants.filter(t => t.category === filters.category);
-//     }
-    
-//     return tenants;
-//   },
-
-//   /**
-//    * Get single tenant by ID
-//    * TODO: Replace with actual GET /tenants/:id
-//    */
-//   getTenant: async (id: number) => {
-//     await delay(400);
-//     const tenant = tenantsData.find(t => t.id === id);
-//     if (!tenant) throw new Error('Tenant not found');
-//     return tenant;
-//   },
-
-//   /**
-//    * Create new tenant
-//    * TODO: Replace with actual POST /tenants
-//    */
-//   createTenant: async (data: any) => {
-//     await delay(800);
-//     const newTenant = {
-//       id: Math.max(...tenantsData.map(t => t.id)) + 1,
-//       ...data,
-//       joinDate: new Date().toISOString().split('T')[0],
-//       status: 'Active'
-//     };
-//     return newTenant;
-//   },
-
-//   /**
-//    * Update existing tenant
-//    * TODO: Replace with actual PUT /tenants/:id
-//    */
-//   updateTenant: async (id: number, data: any) => {
-//     await delay(700);
-//     const tenant = tenantsData.find(t => t.id === id);
-//     if (!tenant) throw new Error('Tenant not found');
-//     return { ...tenant, ...data };
-//   },
-
-//   /**
-//    * Delete tenant
-//    * TODO: Replace with actual DELETE /tenants/:id
-//    */
-//   deleteTenant: async (id: number) => {
-//     await delay(500);
-//     return { success: true, id };
-//   }
-// };
 
 // ============================================
 // MODULE APIs
@@ -245,26 +168,26 @@ export const moduleAPI = {
    * Update modules for a tenant
    * PUT /tenants/:id/modules
    */
-updateTenantModules: async (
-  tenantId: number,
-  modules: Record<string, boolean>
-) => {
-  const res = await fetch(`${API_BASE}/tenants/${tenantId}`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ modules }),
-  });
+  updateTenantModules: async (
+    tenantId: number,
+    modules: Record<string, boolean>
+  ) => {
+    const res = await fetch(`${API_BASE}/tenants/${tenantId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ modules }),
+    });
 
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || "Failed to update tenant modules");
-  return data;
-},
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Failed to update tenant modules");
+    return data;
+  },
 };
 // ============================================
 // REPORTS APIs
 // ============================================
 
-const API_URL = 'http://localhost:5000'; // Change to your backend URL
+const API_URL = 'https://billingbackend-1vei.onrender.com'; // Change to your backend URL
 
 export const reportsAPI = {
   /**
@@ -446,7 +369,6 @@ export const activityAPI = {
    * TODO: Replace with actual GET /activity?limit=10
    */
   getRecentActivity: async (limit: number = 10) => {
-    await delay(500);
     return [
       { id: 1, user: 'Maria Bella', action: 'upgraded plan', target: 'Professional', time: '5 minutes ago', type: 'upgrade' },
       { id: 2, user: 'John Davis', action: 'created new branch', target: 'Downtown Location', time: '12 minutes ago', type: 'create' },
@@ -470,7 +392,6 @@ export const userAPI = {
    * TODO: Replace with actual GET /users
    */
   getUsers: async () => {
-    await delay(600);
     return [
       { id: 1, name: 'Super Admin', email: 'admin@tenantsphere.com', role: 'Super Admin', status: 'Active', lastLogin: '2024-10-23' },
       { id: 2, name: 'Jane Smith', email: 'jane@tenantsphere.com', role: 'Admin', status: 'Active', lastLogin: '2024-10-22' },

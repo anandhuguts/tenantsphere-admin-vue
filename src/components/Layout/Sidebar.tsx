@@ -29,7 +29,7 @@ const tenantNavigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Orders', href: '/orders', icon: Package },
   { name: 'Inventory', href: '/inventory', icon: ClipboardList },
-  { name: 'Reports', href: '/reports', icon: BarChart3 },
+  // { name: 'Reports', href: '/reports', icon: BarChart3 },
   { name: 'Staff', href: '/staff', icon: Users },
   { name: 'Settings', href: '/settings', icon: Settings },
 ];
@@ -38,7 +38,7 @@ const staffNavigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Orders', href: '/orders', icon: Package },
   { name: 'Tasks', href: '/tasks', icon: ClipboardList },
-  { name: 'Reports', href: '/reports', icon: FileText },
+  // { name: 'Reports', href: '/reports', icon: FileText },
   { name: 'Settings', href: '/settings', icon: Settings },
 ];
 
