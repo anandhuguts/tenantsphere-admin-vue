@@ -53,8 +53,8 @@ const TenantDashboard = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-foreground">Welcome back, {user?.tenantName || 'Tenant'}</h1>
-        <p className="text-muted-foreground mt-1">Here's what's happening with your business today</p>
+        <h1 className="text-3xl font-bold text-foreground">Dashboard Overview</h1>
+        <p className="text-muted-foreground mt-1">Welcome back, {user?.tenantName || 'Tenant'}! Here's your business summary</p>
       </div>
 
       {/* Stats Cards */}
@@ -62,52 +62,52 @@ const TenantDashboard = () => {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Today's Sales
+              Total Sales (Today)
             </CardTitle>
             <DollarSign className="h-4 w-4 text-primary" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-foreground">$2,345.67</div>
-            <p className="text-xs text-success mt-1">+12.5% from yesterday</p>
+            <div className="text-2xl font-bold text-foreground">$2,450</div>
+            <p className="text-xs text-success mt-1">Month: $45,231</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Active Users
+              Total Purchases (Today)
             </CardTitle>
-            <Users className="h-4 w-4 text-primary" />
+            <TrendingUp className="h-4 w-4 text-primary" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-foreground">12</div>
-            <p className="text-xs text-muted-foreground mt-1">Staff members</p>
+            <div className="text-2xl font-bold text-foreground">$1,200</div>
+            <p className="text-xs text-muted-foreground mt-1">Month: $18,500</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Total Orders
+              Stock Alerts
             </CardTitle>
-            <Package className="h-4 w-4 text-primary" />
+            <Package className="h-4 w-4 text-destructive" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-foreground">157</div>
-            <p className="text-xs text-success mt-1">+8% from last week</p>
+            <div className="text-2xl font-bold text-foreground">5</div>
+            <p className="text-xs text-destructive mt-1">Low stock items</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Plan Expiry
+              Pending Payments
             </CardTitle>
             <Calendar className="h-4 w-4 text-primary" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-foreground">45 days</div>
-            <p className="text-xs text-muted-foreground mt-1">Professional Plan</p>
+            <div className="text-2xl font-bold text-foreground">$3,450</div>
+            <p className="text-xs text-muted-foreground mt-1">8 invoices pending</p>
           </CardContent>
         </Card>
       </div>
