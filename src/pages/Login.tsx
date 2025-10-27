@@ -129,7 +129,7 @@ const Login = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-2">
+            {/* <div className="grid grid-cols-3 gap-2">
               <Button 
                 type="button" 
                 variant="outline" 
@@ -157,7 +157,7 @@ const Login = () => {
               >
                 Staff
               </Button>
-            </div>
+            </div> */}
           </form>
         </CardContent>
       </Card>
