@@ -17,34 +17,34 @@ const Login = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const handleRoleLogin = async (role: 'superadmin' | 'tenant' | 'staff') => {
-    setIsLoading(true);
+  // const handleRoleLogin = async (role: 'superadmin' | 'tenant' | 'staff') => {
+  //   setIsLoading(true);
 
-    try {
-      const demoCredentials = {
-        superadmin: { email: 'admin@tenantsphere.com', password: 'admin123' },
-        tenant: { email: 'tenant@example.com', password: 'tenant123' },
-        staff: { email: 'staff@example.com', password: 'staff123' }
-      };
+  //   try {
+  //     const demoCredentials = {
+  //       superadmin: { email: 'admin@tenantsphere.com', password: 'admin123' },
+  //       tenant: { email: 'tenant@example.com', password: 'tenant123' },
+  //       staff: { email: 'staff@example.com', password: 'staff123' }
+  //     };
       
-      await login(demoCredentials[role].email, demoCredentials[role].password);
+  //     await login(demoCredentials[role].email, demoCredentials[role].password);
       
-      toast({
-        title: 'Login successful',
-        description: `Welcome as ${role}`,
-      });
+  //     toast({
+  //       title: 'Login successful',
+  //       description: `Welcome as ${role}`,
+  //     });
       
-      navigate('/dashboard');
-    } catch (error) {
-      toast({
-        title: 'Login failed',
-        description: error instanceof Error ? error.message : 'Invalid credentials',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  //     navigate('/dashboard');
+  //   } catch (error) {
+  //     toast({
+  //       title: 'Login failed',
+  //       description: error instanceof Error ? error.message : 'Invalid credentials',
+  //       variant: 'destructive',
+  //     });
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

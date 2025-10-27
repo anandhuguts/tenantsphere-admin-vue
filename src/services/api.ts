@@ -24,6 +24,8 @@ const API_BASE_URL = 'https://api.tenantsphere.com';
 // src/services/api.ts
 const API_BASE = "https://billingbackend-1vei.onrender.com";
 
+
+
 export const tenantAPI = {
   // Get all tenants
   getTenants: async () => {
@@ -82,44 +84,28 @@ export const authAPI = {
    * Login with email and password
    * TODO: Replace with actual POST /auth/login
    */
-  login: async (email: string, password: string) => {
-    // Determine role and user info based on email
-    let role: 'superadmin' | 'tenant' | 'staff';
-    let name: string;
-    let tenantId: number | undefined;
-    let tenantName: string | undefined;
-    
-    if (email.includes('admin@')) {
-      role = 'superadmin';
-      name = 'Super Admin';
-    } else if (email.includes('tenant@')) {
-      role = 'tenant';
-      name = 'Maria Bella';
-      tenantId = 1;
-      tenantName = "Bella's Italian Bistro";
-    } else if (email.includes('staff@')) {
-      role = 'staff';
-      name = 'John Staff';
-      tenantId = 1;
-      tenantName = "Bella's Italian Bistro";
-    } else {
-      throw new Error('Invalid credentials');
-    }
-    
-    return {
-      success: true,
-      token: 'dummy-jwt-token-' + Date.now(),
-      user: {
-        id: 1,
-        name,
-        email,
-        role,
-        avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${name}`,
-        tenantId,
-        tenantName
-      }
-    };
-  },
+login: async (email: string, password: string) => {
+  const res = await fetch('http://localhost:5000/api/auth/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password }),
+  });
+
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || 'Login failed');
+
+  return {
+    success: true,
+    token: data.token,
+    user: {
+      id: data.user.id,
+      name: data.user.full_name,
+      email: data.user.email,
+      role: data.user.role,
+      avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${data.user.full_name}`,
+    },
+  };
+},
 
   /**
    * Logout current user

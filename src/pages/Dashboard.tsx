@@ -114,6 +114,8 @@ const Dashboard = () => {
     }
   ];
 
+  
+
   const getActivityIcon = (type: string) => {
     const iconClass = "h-4 w-4";
     switch(type) {
