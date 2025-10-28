@@ -23,6 +23,10 @@ import Inventory from "./pages/Inventory";
 import Staff from "./pages/Staff";
 import Tasks from "./pages/Tasks";
 import NotFound from "./pages/NotFound";
+import InventoryModule from "./pages/tenant/InventoryModule";
+import BillingModule from "./pages/tenant/BillingModule";
+import ReportsModule from "./pages/tenant/ReportsModule";
+import AccountsModule from "./pages/tenant/AccountsModule";
 
 const queryClient = new QueryClient();
 
@@ -53,9 +57,15 @@ const App = () => (
                 <Route path="reports" element={<RoleBasedRoute allowedRoles={['superadmin']}><Reports /></RoleBasedRoute>} />
                 <Route path="users" element={<RoleBasedRoute allowedRoles={['superadmin']}><Users /></RoleBasedRoute>} />
                 <Route path="settings" element={<Settings />} />
-                <Route path="orders" element={<RoleBasedRoute allowedRoles={['tenant', 'staff']}><Orders /></RoleBasedRoute>} />
-                <Route path="inventory" element={<RoleBasedRoute allowedRoles={['tenant']}><Inventory /></RoleBasedRoute>} />
+                
+                {/* Tenant Routes */}
+                <Route path="inventory" element={<RoleBasedRoute allowedRoles={['tenant']}><InventoryModule /></RoleBasedRoute>} />
+                <Route path="billing" element={<RoleBasedRoute allowedRoles={['tenant']}><BillingModule /></RoleBasedRoute>} />
+                <Route path="accounts" element={<RoleBasedRoute allowedRoles={['tenant']}><AccountsModule /></RoleBasedRoute>} />
                 <Route path="staff" element={<RoleBasedRoute allowedRoles={['tenant']}><Staff /></RoleBasedRoute>} />
+                
+                {/* Staff Routes */}
+                <Route path="orders" element={<RoleBasedRoute allowedRoles={['staff']}><Orders /></RoleBasedRoute>} />
                 <Route path="tasks" element={<RoleBasedRoute allowedRoles={['staff']}><Tasks /></RoleBasedRoute>} />
               </Route>
 

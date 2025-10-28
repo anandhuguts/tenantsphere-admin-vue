@@ -136,6 +136,23 @@ login: async (email: string, password: string) => {
 
 export const moduleAPI = {
   /**
+   * Get modules available for a specific business category
+   * GET /modules/category/:category
+   */
+  getModulesByCategory: async (category: string) => {
+    // Return modules based on business category
+    const modulesByCategory: Record<string, string[]> = {
+      'grocery': ['inventory', 'billing', 'reports', 'users', 'Barcode Scanning', 'Batch Tracking', 'Supplier Management'],
+      'salon': ['billing', 'reports', 'users', 'Appointments', 'Staff Management', 'Service Packages'],
+      'restaurant': ['billing', 'reports', 'users', 'POS', 'Table Management', 'KOT', 'Kitchen Display'],
+      'retail': ['inventory', 'billing', 'reports', 'users', 'Barcode Scanning', 'Warranty Tracking'],
+      'default': ['inventory', 'billing', 'reports', 'users']
+    };
+    
+    return modulesByCategory[category.toLowerCase()] || modulesByCategory['default'];
+  },
+
+  /**
    * Get modules for a tenant
    * GET /tenants/:id/modules
    */
